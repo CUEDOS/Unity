@@ -1,7 +1,6 @@
 *
 !Assets/
-!Assets/*/
-!Assets/Sam/*
-!Assets/Sam/**
+!Assets/Sam/
+!Assets/Sam/SimpleCityGenerator/*
 **.meta
 **.bytes
