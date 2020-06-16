@@ -43,9 +43,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41bc71dfc1af093458bb6f6cd7a198ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  citySize: 100
+  citySize: 1000
   BCI: 0.7
-  FAI: 13
+  FAI: 1
   HVariability: 0.7
   ARVariability: 0.2
   meanCellSize: 30

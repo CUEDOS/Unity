@@ -25,7 +25,6 @@ public class SimpleCityGenerator : MonoBehaviour
     private float meanNumFloors;
     private Vector3 startPos;
     private GameObject Spawner;
-    private GameObject Buildings;
     private GameObject DistCentres;
 
     private void Start()
@@ -53,13 +52,12 @@ public class SimpleCityGenerator : MonoBehaviour
 
     public void SpawnBuildings()
     {
-        Buildings = new GameObject("Buildings");
         gridLength = (int) Mathf.Ceil(citySize / meanCellSize);
         cellSize = citySize / gridLength;
 
         meanNumFloors = FAI / BCI;
 
-        startPos = new Vector3(-cellSize * (gridLength) / 2, 0f, -cellSize * (gridLength) / 2);
+        startPos = new Vector3(-cellSize * gridLength / 2, 0f, -cellSize * gridLength / 2) + transform.position;
 
         for (int x = 0; x < gridLength; x++)
         {
@@ -82,7 +80,7 @@ public class SimpleCityGenerator : MonoBehaviour
 
                 if (floors > 0)
                 {
-                    Spawner = Instantiate(buildingPrefab, pos, Quaternion.identity, Buildings.transform);
+                    Spawner = Instantiate(buildingPrefab, pos, Quaternion.identity, transform);
                     Spawner.transform.localScale = scale;
                 }
             }
@@ -128,12 +126,9 @@ public class SimpleCityGenerator : MonoBehaviour
 
     public void DestroyAll()
     {
-        foreach (var gameObj in FindObjectsOfType(typeof(GameObject)) as GameObject[])
+        for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            if (gameObj.name == "Buildings" || gameObj.name == "DistCentres")
-            {
-                DestroyImmediate(gameObj);
-            }
+            DestroyImmediate(transform.GetChild(i).gameObject);
         }
 
     }

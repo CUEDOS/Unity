@@ -390,7 +390,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 25
+  field of view: 48.6
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -415,8 +415,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 171963102}
-  m_LocalRotation: {x: 0.5735764, y: 0, z: 0, w: 0.8191521}
-  m_LocalPosition: {x: 2.5314407, y: 500, z: -197.42628}
+  m_LocalRotation: {x: -0.02963626, y: 0.9554634, z: -0.103012905, w: -0.27495387}
+  m_LocalPosition: {x: 9.7657175, y: 52.884365, z: 106.3583}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1227,12 +1227,17 @@ PrefabInstance:
     - target: {fileID: 2077589013014935257, guid: d265f3ee57ee55848b45976a365ea361,
         type: 3}
       propertyPath: perimeter.y
-      value: 100
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2077589013014935257, guid: d265f3ee57ee55848b45976a365ea361,
         type: 3}
       propertyPath: pointsPerDimension.y
       value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 2077589013014935257, guid: d265f3ee57ee55848b45976a365ea361,
+        type: 3}
+      propertyPath: perimeter.x
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 3080421470337229307, guid: d265f3ee57ee55848b45976a365ea361,
         type: 3}
@@ -1346,6 +1351,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: '[Graphy]'
+      objectReference: {fileID: 0}
+    - target: {fileID: 2227159000733295864, guid: 34fd58ab7c6fe4c4eb8fb9a3b291ef7e,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2227159000733422370, guid: 34fd58ab7c6fe4c4eb8fb9a3b291ef7e,
         type: 3}
