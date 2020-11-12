@@ -7,6 +7,8 @@ All documentation can be found in the [wiki](https://github.com/SamJCKnox/CUEDOS
 ## Current Assets
 [1. Simple City Generator](https://github.com/SamJCKnox/CUEDOS/wiki/Simple-City-Generator)
 
-[2. Improved Flocking Algorithm](https://github.com/SamJCKnox/CUEDOS/wiki/Improved-Flocking-Algorithm)
+[2. Way Point Following](https://github.com/SamJCKnox/CUEDOS/wiki/Way-Point-Following)
 
-![An example environment in which UAVs are simulated](https://docs.mapbox.com/unity/assets/city-sim-play-mode-1235-c20dee41335c7cd7be2a3c6fb1646b24.webp)
+[3. Improved Flocking Algorithm](https://github.com/SamJCKnox/CUEDOS/wiki/Improved-Flocking-Algorithm)
+
+![An example environment in which UAVs are simulated](https://docs.mapbox.com/unity/maps/overview/)
