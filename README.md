@@ -11,4 +11,4 @@ All documentation can be found in the [wiki](https://github.com/SamJCKnox/CUEDOS
 
 [3. Improved Flocking Algorithm](https://github.com/SamJCKnox/CUEDOS/wiki/Improved-Flocking-Algorithm)
 
-[An example environment in which UAVs are simulated](https://docs.mapbox.com/unity/maps/overview/)
+[An example environment in which UAVs are simulated](https://docs.mapbox.com/unity/maps/examples/)
