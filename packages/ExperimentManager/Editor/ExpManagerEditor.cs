@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Samspace;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using System.Reflection;
@@ -12,96 +10,136 @@ public class ExpManagerEditor : Editor
     public override void OnInspectorGUI()
     {
         // Get target from script
-        ExperimentManager experimentManager = (ExperimentManager) target;
+        var experimentManager = (ExperimentManager) target;
         
         // Set up variables
-        var boldtext = new GUIStyle (GUI.skin.label);
-        boldtext.fontStyle = FontStyle.Bold;
-        string[] dropDownNames = GetFieldNames(experimentManager.targetExperiment);
-        float buttonWidth = 0.44f * (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth);
-        float defaultWidth = EditorGUIUtility.labelWidth;
+        var boldText = new GUIStyle(GUI.skin.label) {fontStyle = FontStyle.Bold};
+        var dropDownNames = GetFieldNames(experimentManager.targetExperiment);
+        var buttonWidth = 0.44f * (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth);
+        var defaultWidth = EditorGUIUtility.labelWidth;
+        
         //Title
-        GUILayout.Label("Experiment Script", boldtext);
+        GUILayout.Label("Experiment Script", boldText);
         experimentManager.targetExperiment = (MonoBehaviour)EditorGUILayout.ObjectField("Script", experimentManager.targetExperiment, typeof(MonoBehaviour), true);
         GUILayout.Space(10f);
         
         // Independent Variable section
-        GUILayout.Label("Independent Variable",boldtext);
+        GUILayout.Label("Independent Variable",boldText);
 
-        for (int j = 0; j < experimentManager.IndependentVariables.Length; j++)
+        for (var j = 0; j < experimentManager.independentVariables.Length; j++)
         {
-            if (experimentManager.IndependentVariables[j] == null)
+            if (experimentManager.independentVariables[j] == null)
             {
-                experimentManager.IndependentVariables[j] = new ExperimentManager.IndependentVariable
-                    {Name = dropDownNames[0]};
+                experimentManager.independentVariables[j] = new ExperimentManager.IndependentVariable
+                    {name = dropDownNames[0]};
             }
             
-            GUIContent label = new GUIContent("Variable");
-            int id = Array.IndexOf(dropDownNames, experimentManager.IndependentVariables[j].Name);
+            var label = new GUIContent("Variable");
+            var id = Array.IndexOf(dropDownNames, experimentManager.independentVariables[j].name);
             id = id < 0 ? 0 : id;
             id = EditorGUILayout.Popup(label, id, dropDownNames);
-            experimentManager.IndependentVariables[j].Name = dropDownNames[id];
+            experimentManager.independentVariables[j].name = dropDownNames[id];
             EditorGUIUtility.labelWidth = 30f;
             GUILayout.BeginHorizontal();
             GUILayout.Space(200f);
-            experimentManager.IndependentVariables[j].MIN = EditorGUILayout.FloatField("Min", experimentManager.IndependentVariables[j].MIN);
+            experimentManager.independentVariables[j].min = EditorGUILayout.FloatField("Min", experimentManager.independentVariables[j].min);
             GUILayout.Space(10f);
-            experimentManager.IndependentVariables[j].Step = EditorGUILayout.FloatField("Step", experimentManager.IndependentVariables[j].Step);
+            experimentManager.independentVariables[j].step = EditorGUILayout.FloatField("Step", experimentManager.independentVariables[j].step);
             GUILayout.Space(10f);
-            experimentManager.IndependentVariables[j].MAX = EditorGUILayout.FloatField("Max", experimentManager.IndependentVariables[j].MAX);
+            experimentManager.independentVariables[j].max = EditorGUILayout.FloatField("Max", experimentManager.independentVariables[j].max);
             GUILayout.EndHorizontal();
             EditorGUIUtility.labelWidth = defaultWidth;
             
-             EditorGUILayout.Space();
+            EditorGUILayout.Space();
         }
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
+        
         if (GUILayout.Button("Add Field", GUILayout.Width(buttonWidth)))
         {
-            ExperimentManager.IndependentVariable[] oldData = experimentManager.IndependentVariables;
-            experimentManager.IndependentVariables = new ExperimentManager.IndependentVariable[experimentManager.IndependentVariables.Length + 1];
+            var oldData = experimentManager.independentVariables;
+            experimentManager.independentVariables = new ExperimentManager.IndependentVariable[experimentManager.independentVariables.Length + 1];
 
-            for (int k = 0; k < oldData.Length; k++)
+            for (var k = 0; k < oldData.Length; k++)
             {
-                experimentManager.IndependentVariables[k] = oldData[k];
-            }
-        }
-        if (GUILayout.Button("Remove Field", GUILayout.Width(buttonWidth)))
-        {
-            if(experimentManager.IndependentVariables.Length==0) return;
-            ExperimentManager.IndependentVariable[] oldData = experimentManager.IndependentVariables;
-            experimentManager.IndependentVariables = new ExperimentManager.IndependentVariable[experimentManager.IndependentVariables.Length - 1];
-
-            for (int k = 0; k < oldData.Length - 1; k++)
-            {
-                experimentManager.IndependentVariables[k] = oldData[k];
-            }
-        }
-        GUILayout.EndHorizontal();
-        
-        // Dependent Variable Section
-        GUILayout.Space(10f);
-        GUILayout.Label("Dependent Variables",boldtext);
-        
-        for (int j = 0; j < experimentManager.DependentVariables.Length; j++)
-        {
-            if (experimentManager.DependentVariables[j] == null)
-            {
-                experimentManager.DependentVariables[j] = new ExperimentManager.DependentVariable
-                    {Name = dropDownNames[0]};
+                experimentManager.independentVariables[k] = oldData[k];
             }
             
-            GUIContent label = new GUIContent("Variable ");
-            int id = Array.IndexOf(dropDownNames, experimentManager.DependentVariables[j].Name);
+            serializedObject.Update();
+            
+            experimentManager.independentVariables[experimentManager.independentVariables.Length - 1].min = 0f;
+            GUILayout.Space(10f);
+            experimentManager.independentVariables[experimentManager.independentVariables.Length - 1].step = 1f;
+            GUILayout.Space(10f);
+            experimentManager.independentVariables[experimentManager.independentVariables.Length - 1].max = 1f;
+
+        }
+        
+        if (GUILayout.Button("Remove Field", GUILayout.Width(buttonWidth)))
+        {
+            if(experimentManager.independentVariables.Length==0) return;
+            var oldData = experimentManager.independentVariables;
+            experimentManager.independentVariables = new 
+                ExperimentManager.IndependentVariable[experimentManager.independentVariables.Length - 1];
+
+            for (var k = 0; k < oldData.Length - 1; k++)
+            {
+                experimentManager.independentVariables[k] = oldData[k];
+            }
+            serializedObject.Update();
+        }
+        
+        GUILayout.EndHorizontal();
+        
+        // Expected Execution time
+        try
+        {
+            experimentManager.FindRanges();
+            var num = experimentManager.FindNumShapeExperiments();
+            var numb = num.Item1;
+            var time = numb * experimentManager.experimentTime / Time.timeScale;
+            if (time > 60)
+            {
+                GUILayout.Label(time > 60 * 60
+                    ? $"Expected Execution Time: {time / 3600} Hour(s)"
+                    : $"Expected Execution Time: {time / 60} Minutes");
+            }
+            else
+            {
+                GUILayout.Label($"Expected Execution Time: {time} Seconds");
+
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        // Dependent Variable Section
+        GUILayout.Space(10f);
+        GUILayout.Label("Dependent Variables",boldText);
+        
+        for (var j = 0; j < experimentManager.dependentVariables.Length; j++)
+        {
+            if (experimentManager.dependentVariables[j] == null)
+            {
+                experimentManager.dependentVariables[j] = new ExperimentManager.DependentVariable
+                    {name = dropDownNames[0]};
+            }
+            
+            var label = new GUIContent("Variable ");
+            var id = Array.IndexOf(dropDownNames, experimentManager.dependentVariables[j].name);
             id = id < 0 ? 0 : id;
             id = EditorGUILayout.Popup(label, id, dropDownNames);
-            experimentManager.DependentVariables[j].Name = dropDownNames[id];
+            experimentManager.dependentVariables[j].name = dropDownNames[id];
             
             EditorGUIUtility.labelWidth = 100f;
             GUILayout.BeginHorizontal();
             GUILayout.Space(200f);
-            experimentManager.DependentVariables[j].DataType = (ExperimentManager.Type)EditorGUILayout.EnumPopup("Data Type", experimentManager.DependentVariables[j].DataType);
+            experimentManager.dependentVariables[j].dataType = 
+                (ExperimentManager.Type)EditorGUILayout.EnumPopup("Data Type", 
+                    experimentManager.dependentVariables[j].dataType);
             GUILayout.EndHorizontal();
             EditorGUIUtility.labelWidth = defaultWidth;
             EditorGUILayout.Space();
@@ -109,83 +147,83 @@ public class ExpManagerEditor : Editor
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
+        
         if (GUILayout.Button("Add Field", GUILayout.Width(buttonWidth)))
         {
-            ExperimentManager.DependentVariable[] oldData = experimentManager.DependentVariables;
-            experimentManager.DependentVariables = new ExperimentManager.DependentVariable[experimentManager.DependentVariables.Length + 1];
+            var oldData = experimentManager.dependentVariables;
+            experimentManager.dependentVariables = new ExperimentManager.DependentVariable[experimentManager.dependentVariables.Length + 1];
 
-            for (int k = 0; k < oldData.Length; k++)
+            for (var k = 0; k < oldData.Length; k++)
             {
-                experimentManager.DependentVariables[k] = oldData[k];
+                experimentManager.dependentVariables[k] = oldData[k];
             }
+            serializedObject.Update();
         }
+        
         if (GUILayout.Button("Remove Field", GUILayout.Width(buttonWidth)))
         {
-            if(experimentManager.DependentVariables.Length==0) return;
-            ExperimentManager.DependentVariable[] oldData = experimentManager.DependentVariables;
-            experimentManager.DependentVariables = new ExperimentManager.DependentVariable[experimentManager.DependentVariables.Length - 1];
+            if(experimentManager.dependentVariables.Length==0) return;
+            var oldData = experimentManager.dependentVariables;
+            experimentManager.dependentVariables = new ExperimentManager.DependentVariable[experimentManager.dependentVariables.Length - 1];
 
-            for (int k = 0; k < oldData.Length - 1; k++)
+            for (var k = 0; k < oldData.Length - 1; k++)
             {
-                experimentManager.DependentVariables[k] = oldData[k];
+                experimentManager.dependentVariables[k] = oldData[k];
             }
+            serializedObject.Update();
         }
+        
         GUILayout.EndHorizontal();
         
-        // Dependent Variable Section
+        // Experiment Variable Section
         GUILayout.Space(10f);
-        GUILayout.Label("Experimental Variables",boldtext);
-        experimentManager.ExperimentTime = EditorGUILayout.FloatField("Experiment Time", experimentManager.ExperimentTime);
+        GUILayout.Label("Experimental Variables",boldText);
+        experimentManager.experimentTime = EditorGUILayout.FloatField("Experiment Time", experimentManager.experimentTime);
         
-        experimentManager.Directory =
-            EditorGUILayout.TextField("Directory", experimentManager.Directory);
-        experimentManager.FileName =
-            EditorGUILayout.TextField("File Name", experimentManager.FileName);
+        experimentManager.directory =
+            EditorGUILayout.TextField("Directory", experimentManager.directory);
+        experimentManager.fileName =
+            EditorGUILayout.TextField("File Name", experimentManager.fileName);
         
         serializedObject.Update();
     }
     
     string[] GetFieldNames(MonoBehaviour script)
     {
+        const BindingFlags bindingFlags = BindingFlags.Public |
+                                          BindingFlags.NonPublic |
+                                          BindingFlags.Instance |
+                                          BindingFlags.Static;
 
-        BindingFlags bindingFlags = BindingFlags.Public |
-                                    BindingFlags.NonPublic |
-                                    BindingFlags.Instance |
-                                    BindingFlags.Static;
+        var classType = script.GetType();
 
-        Type classType = script.GetType();
+        var fnames = classType.GetFields(bindingFlags);
+        var mnames = classType.GetMethods(bindingFlags);
 
-        FieldInfo[] Fnames = classType.GetFields(bindingFlags);
-        MethodInfo[] Mnames = classType.GetMethods(bindingFlags);
+        var realMethods = new List<MethodInfo>();
 
-        List<MethodInfo> realMethods = new List<MethodInfo>();
-
-        // There are 93 methods??? in a MonoBehaviour, we don't care about those
-        // I am praying that it will always find my methods first and then add on
-        // the monobehaviour methods after otherwise I can't hide them from users
-        for (int i = 0; i < Mnames.Length - 93; i++)
+        // There are 93 methods in a MonoBehaviour, we don't care about those
+        for (var i = 0; i < mnames.Length - 93; i++)
         {
-            if (Mnames[i].ReturnType == typeof(void))
+            if (mnames[i].ReturnType == typeof(void))
             {
                 continue;
             }
-            realMethods.Add(Mnames[i]);
+            realMethods.Add(mnames[i]);
         }
 
+        var names = new string[fnames.Length + realMethods.Count];
 
-        string[] names = new string[Fnames.Length + realMethods.Count];
-
-        for (int j = 0; j < Fnames.Length; j++)
+        for (var j = 0; j < fnames.Length; j++)
         {
-            names[j] = Fnames[j].Name;
+            names[j] = fnames[j].Name;
         }
 
-        for (int i = 0; i < realMethods.Count; i++)
+        for (var i = 0; i < realMethods.Count; i++)
         {
-            names[i + Fnames.Length] = realMethods[i].Name;
+            names[i + fnames.Length] = realMethods[i].Name;
         }
 
         return names;
     }
-    
 }
