@@ -12,15 +12,22 @@ public class ExpManagerEditor : Editor
         // Get target from script
         var experimentManager = (ExperimentManager) target;
         
-        // Set up variables
+        //Title
         var boldText = new GUIStyle(GUI.skin.label) {fontStyle = FontStyle.Bold};
+        GUILayout.Label("Experiment Script", boldText);
+        experimentManager.targetExperiment = (MonoBehaviour)EditorGUILayout.ObjectField("Script", experimentManager.targetExperiment, typeof(MonoBehaviour), true);
+
+        if (!experimentManager.targetExperiment) return;
+        
+        
+        // Set up variables
+        
         var dropDownNames = GetFieldNames(experimentManager.targetExperiment);
         var buttonWidth = 0.44f * (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth);
         var defaultWidth = EditorGUIUtility.labelWidth;
         
-        //Title
-        GUILayout.Label("Experiment Script", boldText);
-        experimentManager.targetExperiment = (MonoBehaviour)EditorGUILayout.ObjectField("Script", experimentManager.targetExperiment, typeof(MonoBehaviour), true);
+       
+        
         GUILayout.Space(10f);
         
         // Independent Variable section
