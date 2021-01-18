@@ -19,9 +19,7 @@ public class ExpManagerEditor : Editor
 
         if (!experimentManager.targetExperiment) return;
         
-        
         // Set up variables
-        
         var dropDownNames = GetFieldNames(experimentManager.targetExperiment);
         var buttonWidth = 0.44f * (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth);
         var defaultWidth = EditorGUIUtility.labelWidth;
