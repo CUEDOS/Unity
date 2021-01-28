@@ -4,7 +4,8 @@ CUEDOS is the Collaborative Urban Environment Drone Operations Simulator. Using 
 ## Releases
 v 0.0.1
 These are alpha pachages for end users
-[1. Simple City Generator](https://github.com/SamJCKnox/CUEDOS/Simple-City-Generator)
+
+[Simple City Generator](https://github.com/CUEDOS/Unity/blob/master/packages/Releases/CityGenerator.unitypackage)
 
 ## Wiki
 All documentation can be found in the [wiki](https://github.com/SamJCKnox/CUEDOS/wiki).
