@@ -1,6 +1,11 @@
 # Welcome to CUEDOS
 CUEDOS is the Collaborative Urban Environment Drone Operations Simulator. Using the Unity game engine, these 'Assets' can be used to simulate real world scenarios. This package will include Windfarm Inspection, Advanced Racing Drone Physics Models, Simplified City Genertators and UAV Specific Flocking Behavioural Algorithms.
 
+## Releases
+v 0.0.1
+These are alpha pachages for end users
+[1. Simple City Generator](https://github.com/SamJCKnox/CUEDOS/Simple-City-Generator)
+
 ## Wiki
 All documentation can be found in the [wiki](https://github.com/SamJCKnox/CUEDOS/wiki).
 
