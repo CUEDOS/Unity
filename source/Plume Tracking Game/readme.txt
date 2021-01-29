@@ -10,5 +10,5 @@ To play the game:
 6.	After quitting the game, you can check “TestLog.txt”, which records relevant gameplay data at 10Hz. 
 
 If you have time, please tell me what your experience playing the game was. 
-I am particularly interested in the sort of information that you found helpful: e.g. did you find the map or just the sensor reading more useful? 
-And also please send back “TestLog.txt”.
+I am particularly interested in the sort of information that you found helpful: e.g. did you find the map or just the sensor reading more useful?
+And also, the kind of information that wasn't there: e.g. missing wind field
