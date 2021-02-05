@@ -21,4 +21,10 @@ All documentation can be found in the [wiki](https://github.com/SamJCKnox/CUEDOS
 
 [5. Experiment Manager](https://github.com/CUEDOS/Unity/wiki/Experiment-Manager)
 
+[6. Advanced Drone Prefab](https://github.com/CUEDOS/Unity/wiki/Advance-Drone-Prefab-Home)
+
+[7. Image processing for drone tracking demo](https://github.com/CUEDOS/Unity/wiki/Image-processing-for-drone-tracking-using-OpenCV-Unity)
+
+[8. Rx Tx Module](https://github.com/CUEDOS/Unity/wiki/Rx-Tx-Module)
+
 [An example environment in which UAVs are simulated](https://docs.mapbox.com/unity/maps/examples/)
