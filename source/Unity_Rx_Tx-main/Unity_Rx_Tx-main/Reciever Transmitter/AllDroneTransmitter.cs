@@ -32,7 +32,7 @@ public class AllDroneTransmitter : MonoBehaviour
     float dB_Loss_Total;
     public float[] Received_Transmitter_Signal_Powers;
 
-    LineDrawer lineDrawer;
+    //LineDrawer lineDrawer;
 
     // Start is called before the first frame update
     void Start()
@@ -41,7 +41,7 @@ public class AllDroneTransmitter : MonoBehaviour
         receivers = FindObjectsOfType<AllDroneReciever>();
         Received_Transmitter_Signal_Powers = new float[receivers.Length];
 
-        lineDrawer = new LineDrawer();
+        //lineDrawer = new LineDrawer();
     }
 
     // Update is called once per frame
@@ -96,7 +96,7 @@ public class AllDroneTransmitter : MonoBehaviour
         // Tell the drone what signal it is receiving
         receivers[index].Received_Transmitter_Signal_Power = Received_Transmitter_Signal_Powers[index];
 
-        lineDrawer.DrawLineInGameView(transform.position, receivers[0].transform.position, Color.blue);
+        //lineDrawer.DrawLineInGameView(transform.position, receivers[0].transform.position, Color.blue);
     }
 
 }
