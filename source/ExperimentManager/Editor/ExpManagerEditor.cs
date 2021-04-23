@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Reflection;
 using System;
+using System.Linq;
 
 [CustomEditor(typeof(ExperimentManager))]
 public class ExpManagerEditor : Editor
@@ -11,20 +12,74 @@ public class ExpManagerEditor : Editor
     {
         // Get target from script
         var experimentManager = (ExperimentManager) target;
-        
+
         //Title
         var boldText = new GUIStyle(GUI.skin.label) {fontStyle = FontStyle.Bold};
         GUILayout.Label("Experiment Script", boldText);
-        experimentManager.targetExperiment = (MonoBehaviour)EditorGUILayout.ObjectField("Script", experimentManager.targetExperiment, typeof(MonoBehaviour), true);
+        string[] dropDownNamesLong = {};
+        string[] dropDownNamesShort = {};
+        int[] scriptIds = {}; 
 
-        if (!experimentManager.targetExperiment) return;
-        
+        string[] n = {};
+
+        if (experimentManager.targetExperiment.Length > 0)
+        {
+
+            for (var i = 0; i < experimentManager.targetExperiment.Length; i++)
+            {
+                GUILayout.Space(5f);
+                experimentManager.targetExperiment[i] = (MonoBehaviour) EditorGUILayout.ObjectField("Script",
+                    experimentManager.targetExperiment[i], typeof(MonoBehaviour), true);
+                if (!experimentManager.targetExperiment[i]) continue;
+                var (shortName, longName) = GetFieldNames(experimentManager.targetExperiment[i]);
+
+                var ids = Enumerable.Repeat(i, shortName.Length).ToArray();
+
+                scriptIds = AppendInt(scriptIds, ids);
+                n = AppendString(n, shortName);
+                dropDownNamesShort = AppendString(dropDownNamesShort, shortName);
+                dropDownNamesLong = AppendString(dropDownNamesLong, longName);
+            }
+        }
+
         // Set up variables
-        var dropDownNames = GetFieldNames(experimentManager.targetExperiment);
+
         var buttonWidth = 0.44f * (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth);
         var defaultWidth = EditorGUIUtility.labelWidth;
         
        
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        
+        if (GUILayout.Button("Add Script", GUILayout.Width(buttonWidth)))
+        {
+            var oldData = experimentManager.targetExperiment;
+            experimentManager.targetExperiment = new MonoBehaviour[experimentManager.targetExperiment.Length + 1];
+
+            for (var k = 0; k < oldData.Length; k++)
+            {
+                experimentManager.targetExperiment[k] = oldData[k];
+            }
+
+            serializedObject.Update();
+        }
+        
+        if (GUILayout.Button("Remove Script", GUILayout.Width(buttonWidth)))
+        {
+            if(experimentManager.targetExperiment.Length==0) return;
+            var oldData = experimentManager.targetExperiment;
+            experimentManager.targetExperiment = new 
+                MonoBehaviour[experimentManager.targetExperiment.Length - 1];
+
+            for (var k = 0; k < oldData.Length - 1; k++)
+            {
+                experimentManager.targetExperiment[k] = oldData[k];
+            }
+            serializedObject.Update();
+        }
+        
+        GUILayout.EndHorizontal();
+        if (experimentManager.targetExperiment.Length == 0 || !experimentManager.targetExperiment[0]) return;
         
         GUILayout.Space(10f);
         
@@ -36,14 +91,16 @@ public class ExpManagerEditor : Editor
             if (experimentManager.independentVariables[j] == null)
             {
                 experimentManager.independentVariables[j] = new ExperimentManager.IndependentVariable
-                    {name = dropDownNames[0]};
+                    {name = dropDownNamesLong[0]};
             }
             
             var label = new GUIContent("Variable");
-            var id = Array.IndexOf(dropDownNames, experimentManager.independentVariables[j].name);
+            var id = Array.IndexOf(dropDownNamesShort, experimentManager.independentVariables[j].name);
             id = id < 0 ? 0 : id;
-            id = EditorGUILayout.Popup(label, id, dropDownNames);
-            experimentManager.independentVariables[j].name = dropDownNames[id];
+            id = EditorGUILayout.Popup(label, id, dropDownNamesLong);
+            experimentManager.independentVariables[j].name = dropDownNamesShort[id];
+            experimentManager.independentVariables[j].scriptId = scriptIds[id];
+            
             EditorGUIUtility.labelWidth = 30f;
             GUILayout.BeginHorizontal();
             GUILayout.Space(200f);
@@ -130,15 +187,15 @@ public class ExpManagerEditor : Editor
             if (experimentManager.dependentVariables[j] == null)
             {
                 experimentManager.dependentVariables[j] = new ExperimentManager.DependentVariable
-                    {name = dropDownNames[0]};
+                    {name = dropDownNamesLong[0]};
             }
             
             var label = new GUIContent("Variable ");
-            var id = Array.IndexOf(dropDownNames, experimentManager.dependentVariables[j].name);
+            var id = Array.IndexOf(dropDownNamesShort, experimentManager.dependentVariables[j].name);
             id = id < 0 ? 0 : id;
-            id = EditorGUILayout.Popup(label, id, dropDownNames);
-            experimentManager.dependentVariables[j].name = dropDownNames[id];
-            
+            id = EditorGUILayout.Popup(label, id, dropDownNamesLong);
+            experimentManager.dependentVariables[j].name = dropDownNamesShort[id];
+            experimentManager.dependentVariables[j].scriptId = scriptIds[id];
             EditorGUIUtility.labelWidth = 100f;
             GUILayout.BeginHorizontal();
             GUILayout.Space(200f);
@@ -193,8 +250,9 @@ public class ExpManagerEditor : Editor
         serializedObject.Update();
     }
     
-    string[] GetFieldNames(MonoBehaviour script)
+    (string[], string[]) GetFieldNames(MonoBehaviour script)
     {
+        var name = script.name + " - ";
         const BindingFlags bindingFlags = BindingFlags.Public |
                                           BindingFlags.NonPublic |
                                           BindingFlags.Instance |
@@ -203,32 +261,34 @@ public class ExpManagerEditor : Editor
         var classType = script.GetType();
 
         var fnames = classType.GetFields(bindingFlags);
-        var mnames = classType.GetMethods(bindingFlags);
-
-        var realMethods = new List<MethodInfo>();
-
+        
         // There are 93 methods in a MonoBehaviour, we don't care about those
-        for (var i = 0; i < mnames.Length - 93; i++)
-        {
-            if (mnames[i].ReturnType == typeof(void))
-            {
-                continue;
-            }
-            realMethods.Add(mnames[i]);
-        }
 
-        var names = new string[fnames.Length + realMethods.Count];
-
+        var names = new string[fnames.Length];
+        var longNames = new string[fnames.Length];
+        
         for (var j = 0; j < fnames.Length; j++)
         {
             names[j] = fnames[j].Name;
+            longNames[j] = name + fnames[j].Name;
         }
 
-        for (var i = 0; i < realMethods.Count; i++)
-        {
-            names[i + fnames.Length] = realMethods[i].Name;
-        }
+        return (names, longNames);
+    }
 
-        return names;
+    string[] AppendString(string[] x, string[] y)
+    {
+        var z = new string[x.Length + y.Length];
+        x.CopyTo(z, 0);
+        y.CopyTo(z, x.Length);
+        return z;
+    }
+
+    int[] AppendInt(int[] x, int[] y)
+    {
+        var z = new int[x.Length + y.Length];
+        x.CopyTo(z, 0);
+        y.CopyTo(z, x.Length);
+        return z;
     }
 }

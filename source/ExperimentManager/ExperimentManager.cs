@@ -10,23 +10,27 @@ public class ExperimentManager : MonoBehaviour
     [Serializable]
     public class IndependentVariable
     {
-        [FormerlySerializedAs("Name")] public string name;
-        [FormerlySerializedAs("MIN")] public float min;
-        [FormerlySerializedAs("Step")] public float step;
-        [FormerlySerializedAs("MAX")] public float max;
-        [FormerlySerializedAs("Range")] public float[] range;
-        [FormerlySerializedAs("Output")] public float output;
+        public string name;
+        public string longName;
+        public float min;
+        public float step;
+        public float max;
+        public float[] range;
+        public float output;
+        public int scriptId;
     }
     [Serializable]
     public class DependentVariable
     {
         public string name;
+        public string longName;
         public Type dataType;
         public int num;
         public float output;
+        public int scriptId;
     }
 
-    [FormerlySerializedAs("TargetExperiment")] public MonoBehaviour targetExperiment;
+    [FormerlySerializedAs("TargetExperiment")] public MonoBehaviour[] targetExperiment;
     [FormerlySerializedAs("IndependentVariables")] public IndependentVariable[] independentVariables = new IndependentVariable[1];
     [FormerlySerializedAs("DependentVariables")] public DependentVariable[] dependentVariables = new DependentVariable[1];
     
@@ -50,7 +54,7 @@ public class ExperimentManager : MonoBehaviour
         {
             Debug.Log("Found existing file, Pausing...");
             Debug.Break();
-            return;
+            
         }
         else
         {
@@ -74,7 +78,7 @@ public class ExperimentManager : MonoBehaviour
             switch (dv.dataType)
             {
                 case Type.Average:
-                    value = (float) targetExperiment.GetType().GetField(dv.name).GetValue(targetExperiment);
+                    value = (float) targetExperiment[dv.scriptId].GetType().GetField(dv.name).GetValue(targetExperiment[dv.scriptId]);
                     if (!float.IsNaN(value))
                     {
                         dv.num++;
@@ -85,14 +89,14 @@ public class ExperimentManager : MonoBehaviour
                 case Type.Final:
                     break;
                 case Type.Max:
-                    value = (float) targetExperiment.GetType().GetField(dv.name).GetValue(targetExperiment);
+                    value = (float) targetExperiment[dv.scriptId].GetType().GetField(dv.name).GetValue(targetExperiment[dv.scriptId]);
                     if (value > dv.output)
                     {
                         dv.output = value;
                     }
                     break;
                 case Type.Min:
-                    value = (float) targetExperiment.GetType().GetField(dv.name).GetValue(targetExperiment);
+                    value = (float) targetExperiment[dv.scriptId].GetType().GetField(dv.name).GetValue(targetExperiment[dv.scriptId]);
                     if (value < dv.output)
                     {
                         dv.output = value;
@@ -112,8 +116,11 @@ public class ExperimentManager : MonoBehaviour
     private void ExperimentStart()
     {
         ResetOutputs();
-        
-        targetExperiment.SendMessage("ResetExperiment", _experiments.Dequeue());
+        var variables = _experiments.Dequeue();
+        foreach (var t in targetExperiment)
+        {
+            t.SendMessage("ResetExperiment", variables);
+        }
         _nextTime = Time.time + experimentTime;
         
     }
@@ -144,7 +151,7 @@ public class ExperimentManager : MonoBehaviour
         {
             headers += $"{t.name}, ";
         }
-        headers += "\n";
+        headers += "expRunTime\n";
 
         File.AppendAllText(_path, headers);
     }
@@ -155,9 +162,10 @@ public class ExperimentManager : MonoBehaviour
             => current + $"{t.output}, ");
         line = dependentVariables.Aggregate(line, (current, t) 
             => current + $"{t.output}, ");
-        line += "\n";
+        line += experimentTime + "\n";
         
-        File.AppendAllText(_path, line);
+        File.AppendAllText(_path, line); // If there is an error here, check you don't have the file open elsewhere
+     
     }
 
     private void ResetOutputs()
@@ -198,7 +206,7 @@ public class ExperimentManager : MonoBehaviour
                 case Type.Average:
                     break;
                 case Type.Final:
-                    dv.output = (float) targetExperiment.GetType().GetField(dv.name).GetValue(targetExperiment);
+                    dv.output = (float) targetExperiment[dv.scriptId].GetType().GetField(dv.name).GetValue(targetExperiment[dv.scriptId]);
                     break;
                 case Type.Max:
                     break;
@@ -216,18 +224,22 @@ public class ExperimentManager : MonoBehaviour
         {
             try
             {
-                var value = (float) targetExperiment.GetType().GetField(dv.name).GetValue(targetExperiment);
+                var value = (float) targetExperiment[dv.scriptId].GetType().GetField(dv.name).GetValue(targetExperiment[dv.scriptId]);
             }catch (Exception)
             {
-                Debug.LogError("An Independent Variable was unable to be accessed, " +
-                               "ensure it is set as a public variable.");
+                Debug.LogError("A variable was unable to be accessed: " + dv.name +
+                               " - ensure it is set as a public variable.");
             }
         }
 
         try
         {
-            targetExperiment.SendMessage("ResetExperiment", 
-                new Dictionary<string, float>());
+            foreach (var t in targetExperiment)
+            {
+                t.SendMessage("ResetExperiment", 
+                    new Dictionary<string, float>());
+            }
+
         }
         catch (Exception)
         {
