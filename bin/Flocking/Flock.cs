@@ -69,20 +69,25 @@ public class Flock : MonoBehaviour
 
     [FormerlySerializedAs("ND")]
     [Header("Rule Variables")]
-    [Tooltip("Non-dimensionalise based on ND Exp")]
+    [Tooltip("Non-dimensionalise based on ND Exp Script")]
     public bool nd;
     public float speed;
     public float soiRadius;
     public float flockingInterval;
 
     [Header("Other Variables")]
+    [Tooltip("Destroys agent when arrives at destination")]
     public bool destroyOnArrival;
+    [Tooltip("Distance from destination when agent is destroyed")]
     public float destroyDist = 5f;
+    [Tooltip("If checked, agents destroy when collide with other agents/obstacles")]
     public bool destroyOnCollision;
+    [Tooltip("Delay for when an agent is destroyed")]
     public float destroyDelay;
+    [Tooltip("Vector3 for destination, generally useful for debugging to see if correct destination is pre-set")]
     public Vector3 destination = Vector3.zero;
 
-    [Header("Debug - Show Forces")]
+    [Header("Debug - Show Force Gizmos")]
     public bool migration;
     public bool intersection;
     public bool idealVelocity;
@@ -134,10 +139,6 @@ public class Flock : MonoBehaviour
     public void SetDestination(Vector3 dest)
     {
         destination = dest;
-        _migrationVector = (destination - transform.position).normalized;
-
-        _migrationForce = _migrationVector * speed;
-        migrationForceMag = _migrationForce.magnitude;
     }
 
     private void OnCollisionEnter(Collision collision)
