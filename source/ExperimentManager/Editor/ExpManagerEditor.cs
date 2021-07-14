@@ -8,19 +8,30 @@ using System.Linq;
 [CustomEditor(typeof(ExperimentManager))]
 public class ExpManagerEditor : Editor
 {
+    public void Awake()
+    {
+        
+        //
+    }
+
     public override void OnInspectorGUI()
     {
+
         // Get target from script
         var experimentManager = (ExperimentManager) target;
-
+        
         //Title
         var boldText = new GUIStyle(GUI.skin.label) {fontStyle = FontStyle.Bold};
-        GUILayout.Label("Experiment Script", boldText);
+        GUILayout.Label("Experiment Scripts", boldText);
         string[] dropDownNamesLong = {};
         string[] dropDownNamesShort = {};
         int[] scriptIds = {}; 
 
         string[] n = {};
+        if (experimentManager.targetExperiment is null)
+        {
+            experimentManager.targetExperiment = new MonoBehaviour[0];
+        }
 
         if (experimentManager.targetExperiment.Length > 0)
         {
