@@ -360,7 +360,8 @@ public class Flock : MonoBehaviour
 
     private float Norm(float value, float std)
     {
-        return 1 / (std * Sqrt2PI) * Mathf.Exp(-0.5f * Mathf.Pow((value / std), 2f));
+        // Non-normalised normal distribution: for a value of 0, the output is 1. For a value that is equal to to the std, the output will be ~0.61
+        return Mathf.Exp(-0.5f * Mathf.Pow((value / std), 2f));
     }
 
     private void OnDrawGizmosSelected()
