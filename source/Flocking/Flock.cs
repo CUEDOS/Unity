@@ -9,7 +9,6 @@ using Random = UnityEngine.Random;
 public class Flock : MonoBehaviour
 {
     #region Private Variables
-    private Vector3 _totalForce;
     private Vector3 _separationForce;
     private Vector3 _migrationForce;
     private Vector3 _interForce;
@@ -20,7 +19,7 @@ public class Flock : MonoBehaviour
     private Rigidbody _rb;
     private CollisionManager _cm;
     private Collider _collider;
-    private NDExp _nd;
+    private FlockingManager _fm;
 
     private Vector3 _velocityIdeal;
     private Vector3 _migrationVector;
@@ -86,43 +85,54 @@ public class Flock : MonoBehaviour
     public float destroyDelay;
     [Tooltip("Vector3 for destination, generally useful for debugging to see if correct destination is pre-set")]
     public Vector3 destination = Vector3.zero;
-
+    [Tooltip("Stops agent from returning to spawn point")]
+    public bool noReturn;
+    [Tooltip("For reference if using multiple spawners")]
+    public int spawnerID;
+    
     [Header("Debug - Show Force Gizmos")]
     public bool migration;
     public bool intersection;
     public bool idealVelocity;
     public bool laneFormation;
     public bool orthoganolSeparation;
-    public bool noReturn;
     #endregion
 
     #region Misc Variables
     private bool _returning;
     private Vector3 _startLocation;
-    public int spawnerID;
     private const int MAXColiders = 200; // Max colliders in overlap sphere
     private LayerMask _droneMask;
-    private const float Sqrt2PI = 2.50662827463f;
-        
+
     #endregion
 
     private void Awake()
     {
         _collider = GetComponent<Collider>();
 
+
     }
     public void Start()
     {
-        if (nd)
+        _fm = FindObjectOfType<FlockingManager>();
+        
+        if (_fm)
         {
-            _nd = FindObjectOfType<NDExp>();
-            speed = _nd.velocity;
-            var xs = _nd.Xc;
+            _fm.AddAgent(transform.gameObject);
+            speed = _fm.velocity;
+            var xs = _fm.Xc;
             soiRadius = xs * 3;
-            var ts = _nd.Tc;
+            var ts = _fm.Tc;
             flockingInterval = ts / (2 * Mathf.PI * 20); // 20 flocking calculations per radius
+            
+            migrationGain = _fm.migrationGain;
+            interGain = _fm.interGain;
+            separationGain = _fm.separationGain;
+            selAlignGain = _fm.selAlignGain;
+            orthSepGain = _fm.orthSepGain;
+            laneFormationGain = _fm.laneFormationGain;
         }
-
+        
         _startLocation = transform.position;
 
         _rb = GetComponent<Rigidbody>();
@@ -205,18 +215,19 @@ public class Flock : MonoBehaviour
     private void Flocking()
     {
             
-        var neighbourCol = new Collider[MAXColiders];
-        var size = Physics.OverlapSphereNonAlloc(transform.position, soiRadius, neighbourCol, _droneMask);
-
-        // Find neighbours which are agents
-        var neighbours = new List<GameObject>();
-        for (var i = 0; i < size; i++)
-        {
-            if (neighbourCol[i].transform != transform && neighbourCol[i].CompareTag("UAV")) neighbours.Add(neighbourCol[i].gameObject);
-        }
+        // var neighbourCol = new Collider[MAXColiders];
+        // var size = Physics.OverlapSphereNonAlloc(transform.position, soiRadius, neighbourCol, _droneMask);
+        //
+        // // Find neighbours which are agents
+        // var neighbours = new List<GameObject>();
+        // for (var i = 0; i < size; i++)
+        // {
+        //     if (neighbourCol[i].transform != transform && neighbourCol[i].CompareTag("UAV")) neighbours.Add(neighbourCol[i].gameObject);
+        // }
+        var neighbours = _fm.GetNeighbours(transform.position, soiRadius);
 
         // Flocking Calculations
-        if (neighbours.Count > 0)
+        if (neighbours.Length > 0)
         {
             var v = _rb.velocity;
                 
@@ -353,6 +364,7 @@ public class Flock : MonoBehaviour
 
     void DestroyAgent()
     {
+        _fm.RemoveAgent(transform.gameObject);
         _rb.velocity = Vector3.zero; // Stop moving
         _collider.enabled = false; // make invisible to other agents
         Destroy(gameObject, destroyDelay); // destroy in time
