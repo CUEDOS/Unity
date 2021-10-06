@@ -228,7 +228,7 @@ public class ExperimentManager : MonoBehaviour
             }catch (Exception)
             {
                 Debug.LogError("A variable was unable to be accessed: " + dv.name +
-                               " - ensure it is set as a public variable.");
+                               " - ensure it is set as a public variable. Error also occurs when variable is not a float.");
             }
         }
 

@@ -60,11 +60,11 @@ public class Flock : MonoBehaviour
     [Range(0f, 10f)]
     public float orthSepGain;
 
-    [Header("Force Std")] 
-    public float lfStd;
-    public float sepStd;
-    public float selAlStd;
-    public float orthSepStd;
+    [Header("Force Range")] 
+    public float lfRange;
+    public float sepRange;
+    public float selAlRange;
+    public float orthSepRange;
 
     [FormerlySerializedAs("ND")]
     [Header("Rule Variables")]
@@ -123,14 +123,19 @@ public class Flock : MonoBehaviour
             var xs = _fm.Xc;
             soiRadius = xs * 3;
             var ts = _fm.Tc;
-            flockingInterval = ts / (2 * Mathf.PI * 20); // 20 flocking calculations per radius
+            flockingInterval = ts / (2 * Mathf.PI * 5); // 1 flocking calculations per radius
             
             migrationGain = _fm.migrationGain;
             interGain = _fm.interGain;
             separationGain = _fm.separationGain;
             selAlignGain = _fm.selAlignGain;
-            orthSepGain = _fm.orthSepGain;
+            orthSepGain = _fm.swirlGain;
             laneFormationGain = _fm.laneFormationGain;
+            
+            lfRange = _fm.lfRange;
+            sepRange = _fm.sepRange;
+            selAlRange = _fm.selAlRange;
+            orthSepRange = _fm.orthSepRange;
         }
         
         _startLocation = transform.position;
@@ -251,19 +256,27 @@ public class Flock : MonoBehaviour
                 var neighbourMig = neighbour.GetComponent<Flock>()._migrationForce;
                     
                 // ==========LaneFormation===============
-                var diff = Vector3.Dot(neighbourMig, _migrationForce) /
-                           (_migrationForce.magnitude * neighbourMig.magnitude); // Find the difference in migration vectors
-                var workingVec = (-Vector3.Dot(_migrationForce, ab) * _migrationForce + _migrationForce.magnitude * _migrationForce.magnitude
-                    * ab).normalized * (diff * Norm(dist, lfStd)); // Lane formation force
-                _laneFormForce += (!float.IsNaN(workingVec.magnitude)) ? workingVec : Vector3.zero;
+                // var diff = Vector3.Dot(neighbourMig, _migrationForce) /
+                //            (_migrationForce.magnitude * neighbourMig.magnitude); // Find the difference in migration vectors
+                // var workingVec = (-Vector3.Dot(_migrationForce, ab) * _migrationForce + _migrationForce.magnitude * _migrationForce.magnitude
+                //     * ab).normalized * (diff * Norm(dist, lfRange)); // Lane formation force
+                // _laneFormForce += (!float.IsNaN(workingVec.magnitude)) ? workingVec : Vector3.zero;
 
+                var m1 = Vector3.Dot(neighbourMig, _migrationForce) /
+                         (_migrationForce.magnitude * neighbourMig.magnitude);
+                //var m2 = NormCut(dist, lfRange, 10f);
+                var m2 = Norm(dist, lfRange);
+                var d = ab.normalized;
+                var vec = m1 * m2 * d;
+                _laneFormForce += (!float.IsNaN(vec.magnitude)) ? vec : Vector3.zero;
+                
                 //===========SelectiveAlignment==========
                 var cv = (v - neightbourVel).normalized;
                 var mag = Mathf.Clamp01(Vector3.Dot(cv, ab.normalized));
-                _selAlignForce += Norm(dist,selAlStd) * mag * neightbourVel.normalized;
+                _selAlignForce += Norm(dist,selAlRange) * mag * neightbourVel.normalized;
                     
                 // ========Orthoganol Separation=========
-                _orthSepForce += Norm(dist, orthSepStd) * mag * Vector3.Cross(_rb.velocity, neightbourVel).normalized;
+                _orthSepForce += Norm(dist, orthSepRange) * Vector3.Cross(_rb.velocity, neightbourVel).normalized;
 
             }
                 
@@ -297,7 +310,7 @@ public class Flock : MonoBehaviour
             var dist = sepVec.magnitude;
             var repDir = -sepVec.normalized;
 
-            _separationForce += Norm(dist,sepStd) * repDir;
+            _separationForce += Norm(dist,sepRange) * repDir;
 
         }
 
@@ -375,7 +388,11 @@ public class Flock : MonoBehaviour
         // Non-normalised normal distribution: for a value of 0, the output is 1. For a value that is equal to to the std, the output will be ~0.61
         return Mathf.Exp(-0.5f * Mathf.Pow((value / std), 2f));
     }
-
+    private float NormCut(float value, float std, float r)
+    {
+        // Non-normalised normal distribution: for a value of 0, the output is 1. For a value that is equal to to the std, the output will be ~0.61
+        return value < r ? 0f : Mathf.Exp(-0.5f * Mathf.Pow((value / std), 2f));
+    }
     private void OnDrawGizmosSelected()
     {
         var position = transform.position;
