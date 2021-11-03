@@ -36,7 +36,10 @@ public class ExperimentManager : MonoBehaviour
     
     [Serializable]
     public enum Type {Average, Final, Max, Min};
-
+    
+    [Tooltip("Setting this as true will make the experiment run for the number of timesteps in the experiment time.")]
+    public bool timeStep;
+    private int steps;
     [FormerlySerializedAs("ExperimentTime")] public float experimentTime;
     [FormerlySerializedAs("FileName")] public string fileName;
     [FormerlySerializedAs("Directory")] public string directory;
@@ -52,7 +55,7 @@ public class ExperimentManager : MonoBehaviour
         _path = directory + "/" + fileName + ".csv";
         if (File.Exists(_path))
         {
-            Debug.Log("Found existing file, Pausing...");
+            Debug.Log("Experiment Manager: Found existing file, Pausing...");
             Debug.Break();
             
         }
@@ -106,11 +109,23 @@ public class ExperimentManager : MonoBehaviour
                     throw new ArgumentOutOfRangeException();
             }
         }
-        
-        if (Time.time > _nextTime)
+        // If this experiment is set to timeStep mode it will check to see if the number of timesteps have passed is greater than the number set.
+        if(timeStep)
         {
-            ExperimentEnd();
+            steps++;
+            if (steps > _nextTime)
+            {
+                ExperimentEnd();
+            } 
         }
+        else
+        {
+            if (Time.time > _nextTime)
+            {
+                ExperimentEnd();
+            }  
+        }
+
     }
 
     private void ExperimentStart()
@@ -121,7 +136,17 @@ public class ExperimentManager : MonoBehaviour
         {
             t.SendMessage("ResetExperiment", variables);
         }
-        _nextTime = Time.time + experimentTime;
+
+        if (timeStep)
+        {
+            _nextTime = experimentTime;
+            steps = 0;
+        }
+        else
+        {
+            _nextTime = Time.time + experimentTime;
+        }
+        
         
     }
 

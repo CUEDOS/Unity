@@ -158,7 +158,7 @@ public class Flock : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (_cm) _cm.NewConflict(gameObject, collision.gameObject, collision.relativeVelocity);
+        if (_cm) _cm.NewConflict(gameObject, collision.gameObject);
         if(destroyOnCollision) DestroyAgent();
     }
 

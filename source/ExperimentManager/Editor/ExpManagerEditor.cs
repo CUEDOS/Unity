@@ -171,7 +171,16 @@ public class ExpManagerEditor : Editor
             experimentManager.FindRanges();
             var num = experimentManager.FindNumShapeExperiments();
             var numb = num.Item1;
-            var time = numb * experimentManager.experimentTime / Time.timeScale;
+            float time;
+            if (experimentManager.timeStep)
+            {
+                time = numb * experimentManager.experimentTime * Time.fixedDeltaTime / Time.timeScale;
+            }
+            else
+            {
+                time = numb * experimentManager.experimentTime / Time.timeScale;
+
+            }
             if (time > 60)
             {
                 GUILayout.Label(time > 60 * 60
@@ -251,6 +260,7 @@ public class ExpManagerEditor : Editor
         // Experiment Variable Section
         GUILayout.Space(10f);
         GUILayout.Label("Experimental Variables",boldText);
+        experimentManager.timeStep = EditorGUILayout.Toggle("Time by Timestep", experimentManager.timeStep);
         experimentManager.experimentTime = EditorGUILayout.FloatField("Experiment Time", experimentManager.experimentTime);
         
         experimentManager.directory =
