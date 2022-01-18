@@ -185,10 +185,11 @@ public class SaveData : MonoBehaviour
                     saveData += "NULL" + '\t';
                 }
             }
-
-            saveData += GetFieldValues(targetData[i]);
-            saveData += GetMethodValues(targetData[i]);
-
+            else
+            {
+                saveData += GetFieldValues(targetData[i]);
+                saveData += GetMethodValues(targetData[i]);
+            }
         }
         saveData += '\n';
         File.AppendAllText(path, saveData);
