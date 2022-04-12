@@ -1,252 +1,258 @@
 using System.Collections;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using System.Reflection;
-using System.IO;
+using System;
 
-public class SaveData : MonoBehaviour
+[CustomEditor(typeof(SaveData))]
+public class SaveDataEditor : Editor
 {
-    [System.Serializable]
-    public class TargetSaveData
+
+    public override void OnInspectorGUI()
     {
-        public GameObject targetGameObject;
-        public MonoBehaviour scriptInstance;
-        public string[] fieldNames = new string[] { "ENTER NAME" };
-        public FieldInfo[] fieldInfos = new FieldInfo[0];
-        public MethodInfo[] methodInfos = new MethodInfo[0];
-    }
+        DrawDefaultInspector();
 
-    [HideInInspector]
-    public TargetSaveData[] targetData = new TargetSaveData[1];
-    public string filePath = "Test.txt";
-    string path;
+        SaveData data = (SaveData)target;
 
-    // In the future it may be useful to have separate collection and writing to file, so that the file writing is spread out?
-    // I'm not sure how expensive it is to open and close a file, we can't leave it open.
-    // public float DataCollectionFrequency = 10f;
-    public float SaveFrequency = 10f;
-    float count;
-
-    public void CreateFile()
-    {
-        // Unity by default saves files to the project folder, so I add this to put them in assets folder
-        path = "Assets/" + filePath;
-
-        // Make sure the file doesn't already exist
-        if (File.Exists(path))
+        // Button to delete the file at the path specified by the data saver script
+        if (GUILayout.Button("Delete File"))
         {
-            // For now I'm just adding a new line to show a new run of data collection
-            File.AppendAllText(path, "\n");
-            Debug.Log("Found existing file, data will be appended to this.");
-            return;
-        }
-
-        // Create the new file
-        FileStream f = File.Create(path);
-        f.Close();
-
-        // We're going to add a header which is all the field names
-        string header = "";
-
-        for (int i = 0; i < targetData.Length; i++)
-        {
-            // Make sure the instance we are looking at actually exists
-            if (targetData[i].scriptInstance == null)
-                continue;
-
-            // Run through the fields and check for vectors - they need extra columns
-            for (int j = 0; j < targetData[i].fieldInfos.Length; j++)
+            string path = "Assets/" + data.filePath;
+            // DeleteAsset returns true if the file was deleted
+            if (AssetDatabase.DeleteAsset(path))
             {
-                if (targetData[i].fieldInfos[j].FieldType == typeof(Vector3))
-                {
-                    header += Vector3Header(targetData[i].fieldInfos[j].Name);
-                }
-                else if (targetData[i].fieldInfos[j].FieldType == typeof(Vector2))
-                {
-                    header += Vector2Header(targetData[i].fieldInfos[j].Name);
-                }
-                else
-                {
-                    header += targetData[i].fieldInfos[j].Name + '\t';
-                }
+                Debug.Log("File: " + data.filePath + " deleted successfully.");
             }
-
-            // Do the same for the methods
-            for (int j = 0; j < targetData[i].methodInfos.Length; j++)
+            else
             {
-                if (targetData[i].methodInfos[j].ReturnType == typeof(Vector3))
-                {
-                    header += Vector3Header(targetData[i].methodInfos[j].Name);
-                }
-                else if (targetData[i].methodInfos[j].ReturnType == typeof(Vector2))
-                {
-                    header += Vector2Header(targetData[i].methodInfos[j].Name);
-                }
-                else
-                {
-                    header += targetData[i].methodInfos[j].Name + '\t';
-                }
+                Debug.LogWarning("File could not be deleted, check if it exists and if it's in use somewhere else");
             }
         }
 
-        // Write the header to the file
-        header += '\n';
-        File.WriteAllText(path, header);
-    }
+        
 
-    string Vector3Header(string name)
-    {
-        return name + "_x" + '\t' + name + "_y" + '\t' + name + "_z" + '\t';
-    }
+        float buttonWidth = 0.4f * (EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth);
 
-    string Vector2Header(string name)
-    {
-        return name + "_x" + '\t' + name + "_y" + '\t';
-    }
+        // -------------------------------------------------------------------------------------
+        //          Draw the same collection of UI elements for each script we're saving from
+        // -------------------------------------------------------------------------------------
 
-    // This function should take a MonoBehaviour and list of field names AT RUNTIME
-    // the instance of the object can be hooked up by a public reference to MonoBehaviour
-    // Reflection then allows you to dig down to the inheriting class type and use that
-    public void GetFields()
-    {
-        BindingFlags bindingFlags = BindingFlags.Public |
-                            BindingFlags.NonPublic |
-                            BindingFlags.Instance |
-                            BindingFlags.Static;
-
-        // Iterate through our save targets (each class instance) and get references to all the target fields and methods
-        for (int i = 0; i < targetData.Length; i++)
+        SaveData.TargetSaveData targetSaveData;
+        for (int i = 0; i < data.targetData.Length; i++)
         {
-            // Make sure the instance actually exists
-            if (targetData[i].scriptInstance == null)
-                Debug.LogError("Null Script Reference!! Please remove any empty class references");
+            targetSaveData = data.targetData[i];
 
-            Type classType = targetData[i].scriptInstance.GetType();
+            // -------------------------------------------------------------------------------------
+            //      Game object selection
+            // -------------------------------------------------------------------------------------
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Game Object with target monobehaviour scripts attached");
 
-            List<FieldInfo> fieldList = new List<FieldInfo>();
-            List<MethodInfo> methodList = new List<MethodInfo>();
+            // Header and Remove Button for the root game object
+            EditorGUILayout.BeginHorizontal();
 
-            for (int j = 0; j < targetData[i].fieldNames.Length; j++)
+            if (targetSaveData.targetGameObject != null)
             {
-                FieldInfo fo = classType.GetField(targetData[i].fieldNames[j], bindingFlags);
-                if (fo != null)
+                EditorGUILayout.LabelField(data.targetData[i].targetGameObject.name);
+            }
+            else
+            {
+                EditorGUILayout.LabelField("");
+            }
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Remove", GUILayout.Width(buttonWidth)))
+            {
+                DeleteClassAtIndex(data, i);
+                serializedObject.Update();
+                return;
+            }
+            EditorGUILayout.EndHorizontal();
+
+            // Draw the input for the target game object
+            targetSaveData.targetGameObject = (GameObject)EditorGUILayout.ObjectField("Game Object: ", targetSaveData.targetGameObject, typeof(GameObject), true);
+
+            // -------------------------------------------------------------------------------------
+            //      Monobehaviour script selection
+            // -------------------------------------------------------------------------------------
+
+            // If no game object is selected we'll skip drawing this part and wait for one to be selected
+            if (targetSaveData.targetGameObject != null)
+            {
+                EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Select script from the dropdown menu or drag and drop");
+
+                // Draw the drop down for the script instances which are attached to the target game object
+                EditorGUILayout.BeginHorizontal();
+
+                // Grab any monobehaviour derived scripts on the object
+                MonoBehaviour[] monoBehaviours = targetSaveData.targetGameObject.GetComponents<MonoBehaviour>();
+
+                // Get the names of the scripts
+                string[] dropDownNames = new string[monoBehaviours.Length];
+                for (int j = 0; j < monoBehaviours.Length; j++)
                 {
-                    fieldList.Add(fo);
+                    dropDownNames[j] = monoBehaviours[j].GetType().Name;
                 }
-                else
+
+                GUIContent label = new GUIContent("Select Script: ");
+
+                int id = -1;
+
+                if (targetSaveData.scriptInstance != null)
                 {
-                    MethodInfo mo = classType.GetMethod(targetData[i].fieldNames[j], bindingFlags);
-                    if (mo == null)
+                    // This seems like an expensive search but it'll do for now!
+                    id = Array.IndexOf(dropDownNames, targetSaveData.scriptInstance.GetType().Name);
+                }
+                id = id < 0 ? 0 : id;
+                id = EditorGUILayout.Popup(label, id, dropDownNames);
+                targetSaveData.scriptInstance = monoBehaviours[id];
+
+                EditorGUILayout.EndHorizontal();
+
+                targetSaveData.scriptInstance = (MonoBehaviour)EditorGUILayout.ObjectField("Drag+Drop Script: ", targetSaveData.scriptInstance, typeof(MonoBehaviour), true);
+
+                if (data.targetData[i].scriptInstance != null)
+                {
+                    dropDownNames = GetFieldNames(data.targetData[i].scriptInstance);
+
+                    if (dropDownNames.Length == 0)
                     {
-                        Debug.LogError("No Field or Method with name " + targetData[i].fieldNames[j] + " could be found.");
+                        // There are no fields or methods which we can collect data from to save
+                        EditorGUILayout.LabelField("Script has no suitable fields or methods");
+                        data.targetData[i].fieldNames = new string[] { "ENTER NAME" };
                     }
-                    methodList.Add(mo);
+                    else
+                    {
+                        for (int j = 0; j < data.targetData[i].fieldNames.Length; j++)
+                        {
+                            label = new GUIContent("Field to Save: ");
+                            id = Array.IndexOf(dropDownNames, data.targetData[i].fieldNames[j]);
+                            id = id < 0 ? 0 : id;
+                            id = EditorGUILayout.Popup(label, id, dropDownNames);
+                            data.targetData[i].fieldNames[j] = dropDownNames[id];
+                        }
+
+                        EditorGUILayout.BeginHorizontal();
+                        GUILayout.Label("", GUILayout.Width(EditorGUIUtility.labelWidth));
+
+                        if (GUILayout.Button("Remove Field", GUILayout.Width(buttonWidth)))
+                        {
+                            string[] oldData = data.targetData[i].fieldNames;
+                            data.targetData[i].fieldNames = new string[data.targetData[i].fieldNames.Length - 1];
+
+                            for (int k = 0; k < oldData.Length - 1; k++)
+                            {
+                                data.targetData[i].fieldNames[k] = oldData[k];
+                            }
+                        }
+
+                        GUILayout.FlexibleSpace();
+
+                        if (GUILayout.Button("Add Field", GUILayout.Width(buttonWidth)))
+                        {
+                            string[] oldData = data.targetData[i].fieldNames;
+                            data.targetData[i].fieldNames = new string[data.targetData[i].fieldNames.Length + 1];
+
+                            for (int k = 0; k < oldData.Length; k++)
+                            {
+                                data.targetData[i].fieldNames[k] = oldData[k];
+                            }
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
                 }
             }
-            targetData[i].fieldInfos = fieldList.ToArray();
-            targetData[i].methodInfos = methodList.ToArray();
         }
-    }
 
-    // Start is called before the first frame update
-    public void Start()
-    {
-        GetFields();
-        CreateFile();
-    }
-
-    void FixedUpdate()
-    {
-        count += Time.fixedDeltaTime;
-
-        // If it's time to save some data
-        if (count >= (1f / SaveFrequency))
+        EditorGUILayout.Space();
+        if (GUILayout.Button("Add Data Class/Script"))
         {
-            Save();
+            SaveData.TargetSaveData[] oldData = data.targetData;
+            data.targetData = new SaveData.TargetSaveData[data.targetData.Length + 1];
+
+            for (int i = 0; i < oldData.Length; i++)
+            {
+                data.targetData[i] = oldData[i];
+            }
         }
+
+        serializedObject.Update();
     }
 
-    public void Save()
+    //private string[] GetMonoBehaviourNames(GameObject targetGameObject)
+    //{
+    //    MonoBehaviour[] monoBehaviours = targetGameObject.GetComponents<MonoBehaviour>();
+    //    string[] names = new string[monoBehaviours.Length];
+    //    for (int i = 0; i < monoBehaviours.Length; i++)
+    //    {
+    //        names[i] = monoBehaviours[i].GetType().Name;
+    //    }
+    //    return names;
+    //}
+
+    
+    void DeleteClassAtIndex(SaveData data, int index)
     {
-        string saveData = "";
-        for (int i = 0; i < targetData.Length; i++)
+        SaveData.TargetSaveData[] oldData = data.targetData;
+        data.targetData = new SaveData.TargetSaveData[data.targetData.Length - 1];
+
+        int i = 0;
+        int j = 0;
+
+        while (i < oldData.Length)
         {
-            // Make sure the instance still exists
-            if (targetData[i].scriptInstance == null)
+            if (i != index)
             {
-                // Just let the user know that we found a null reference
-                Debug.LogWarning("Null instance found, saving will continue with NULL values for object " + i.ToString());
-                // If it doesn't we're already commited to saving data, maybe we can just put a placeholder in the file
-                for (int j = 0; j < targetData[i].fieldInfos.Length; j++)
-                {
-                    saveData += "NULL" + '\t';
-                }
-                for (int j = 0; j < targetData[i].methodInfos.Length; j++)
-                {
-                    saveData += "NULL" + '\t';
-                }
+                data.targetData[j] = oldData[i];
+                j++;
             }
-            else
-            {
-                saveData += GetFieldValues(targetData[i]);
-                saveData += GetMethodValues(targetData[i]);
-            }
+            i++;
         }
-        saveData += '\n';
-        File.AppendAllText(path, saveData);
-        count -= (1f / SaveFrequency);
     }
 
-    string GetFieldValues(TargetSaveData target)
+  
+
+    string[] GetFieldNames(MonoBehaviour script)
     {
-        string data = "";
-        for (int j = 0; j < target.fieldInfos.Length; j++)
+
+        BindingFlags bindingFlags = BindingFlags.Public |
+                        BindingFlags.NonPublic |
+                        BindingFlags.Instance |
+                        BindingFlags.Static;
+
+        Type classType = script.GetType();
+
+        FieldInfo[] Fnames = classType.GetFields(bindingFlags);
+        MethodInfo[] Mnames = classType.GetMethods(bindingFlags);
+
+        List<MethodInfo> realMethods = new List<MethodInfo>();
+
+        // There are 93 methods??? in a MonoBehaviour, we don't care about those
+        // I am praying that it will always find my methods first and then add on
+        // the monobehaviour methods after otherwise I can't hide them from users
+        for (int i = 0; i < Mnames.Length - 93; i++)
         {
-            if (target.fieldInfos[j].FieldType == typeof(Vector3))
+            if (Mnames[i].ReturnType == typeof(void))
             {
-                data += GetVector3String((Vector3)target.fieldInfos[j].GetValue(target.scriptInstance)) + '\t';
+                continue;
             }
-            else
-            {
-                data += target.fieldInfos[j].GetValue(target.scriptInstance).ToString() + '\t';
-            }
+            realMethods.Add(Mnames[i]);
         }
-        return data;
-    }
 
-    string GetMethodValues(TargetSaveData target)
-    {
-        string data = "";
-        for (int j = 0; j < target.methodInfos.Length; j++)
+
+        string[] names = new string[Fnames.Length + realMethods.Count];
+
+        for (int j = 0; j < Fnames.Length; j++)
         {
-            if (target.methodInfos[j].ReturnType == typeof(Vector3))
-            {
-                data += GetVector3String((Vector3)target.methodInfos[j].Invoke(target.scriptInstance, new object[] { })) + '\t';
-            }
-            else
-            {
-                data += target.methodInfos[j].Invoke(target.scriptInstance, new object[] { }).ToString() + '\t';
-            }
+            names[j] = Fnames[j].Name;
         }
-        return data;
-    }
 
-    string GetVector3String(Vector3 vector)
-    {
-        return vector.x.ToString() + '\t' + vector.y.ToString() + '\t' + vector.z.ToString();
-    }
+        for (int i = 0; i < realMethods.Count; i++)
+        {
+            names[i + Fnames.Length] = realMethods[i].Name;
+        }
 
-
-    public void AddNewLine()
-    {
-        File.AppendAllText(path, "\n");
-    }
-
-    void OnDisable()
-    {
-#if UNITY_EDITOR
-        UnityEditor.AssetDatabase.Refresh();
-#endif
+        return names;
     }
 }
