@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +10,8 @@ public class SaveData : MonoBehaviour
     [System.Serializable]
     public class TargetSaveData
     {
-        public MonoBehaviour instance;
+        public GameObject targetGameObject;
+        public MonoBehaviour scriptInstance;
         public string[] fieldNames = new string[] { "ENTER NAME" };
         public FieldInfo[] fieldInfos = new FieldInfo[0];
         public MethodInfo[] methodInfos = new MethodInfo[0];
@@ -27,7 +28,7 @@ public class SaveData : MonoBehaviour
     public float SaveFrequency = 10f;
     float count;
 
-   public void CreateFile()
+    public void CreateFile()
     {
         // Unity by default saves files to the project folder, so I add this to put them in assets folder
         path = "Assets/" + filePath;
@@ -51,7 +52,7 @@ public class SaveData : MonoBehaviour
         for (int i = 0; i < targetData.Length; i++)
         {
             // Make sure the instance we are looking at actually exists
-            if (targetData[i].instance == null)
+            if (targetData[i].scriptInstance == null)
                 continue;
 
             // Run through the fields and check for vectors - they need extra columns
@@ -96,7 +97,8 @@ public class SaveData : MonoBehaviour
 
     string Vector3Header(string name)
     {
-        return name + "_x" + '\t' + name + "_y" + '\t' + name + "_z" + '\t';    }
+        return name + "_x" + '\t' + name + "_y" + '\t' + name + "_z" + '\t';
+    }
 
     string Vector2Header(string name)
     {
@@ -106,7 +108,7 @@ public class SaveData : MonoBehaviour
     // This function should take a MonoBehaviour and list of field names AT RUNTIME
     // the instance of the object can be hooked up by a public reference to MonoBehaviour
     // Reflection then allows you to dig down to the inheriting class type and use that
-   public void GetFields()
+    public void GetFields()
     {
         BindingFlags bindingFlags = BindingFlags.Public |
                             BindingFlags.NonPublic |
@@ -117,10 +119,10 @@ public class SaveData : MonoBehaviour
         for (int i = 0; i < targetData.Length; i++)
         {
             // Make sure the instance actually exists
-            if (targetData[i].instance == null)
+            if (targetData[i].scriptInstance == null)
                 Debug.LogError("Null Script Reference!! Please remove any empty class references");
 
-            Type classType = targetData[i].instance.GetType();
+            Type classType = targetData[i].scriptInstance.GetType();
 
             List<FieldInfo> fieldList = new List<FieldInfo>();
             List<MethodInfo> methodList = new List<MethodInfo>();
@@ -171,7 +173,7 @@ public class SaveData : MonoBehaviour
         for (int i = 0; i < targetData.Length; i++)
         {
             // Make sure the instance still exists
-            if (targetData[i].instance == null)
+            if (targetData[i].scriptInstance == null)
             {
                 // Just let the user know that we found a null reference
                 Debug.LogWarning("Null instance found, saving will continue with NULL values for object " + i.ToString());
@@ -203,11 +205,11 @@ public class SaveData : MonoBehaviour
         {
             if (target.fieldInfos[j].FieldType == typeof(Vector3))
             {
-                data += GetVector3String((Vector3)target.fieldInfos[j].GetValue(target.instance)) + '\t';
+                data += GetVector3String((Vector3)target.fieldInfos[j].GetValue(target.scriptInstance)) + '\t';
             }
             else
             {
-                data += target.fieldInfos[j].GetValue(target.instance).ToString() + '\t';
+                data += target.fieldInfos[j].GetValue(target.scriptInstance).ToString() + '\t';
             }
         }
         return data;
@@ -220,11 +222,11 @@ public class SaveData : MonoBehaviour
         {
             if (target.methodInfos[j].ReturnType == typeof(Vector3))
             {
-                data += GetVector3String((Vector3)target.methodInfos[j].Invoke(target.instance, new object[] { })) + '\t';
+                data += GetVector3String((Vector3)target.methodInfos[j].Invoke(target.scriptInstance, new object[] { })) + '\t';
             }
             else
             {
-                data += target.methodInfos[j].Invoke(target.instance, new object[] { }).ToString() + '\t';
+                data += target.methodInfos[j].Invoke(target.scriptInstance, new object[] { }).ToString() + '\t';
             }
         }
         return data;
@@ -240,20 +242,6 @@ public class SaveData : MonoBehaviour
     {
         File.AppendAllText(path, "\n");
     }
-
-    public void ClearFile()
-    {
-        path = "Assets/" + filePath;
-
-        // Make sure the file doesn't already exist
-        if (File.Exists(path))
-        {
-            File.Delete(path);
-            Debug.Log("File: " + path + " deleted successfully.");
-            return;
-        }
-    }
-
 
     void OnDisable()
     {
